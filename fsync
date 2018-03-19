@@ -27,6 +27,8 @@ log ()
 
 flirc_sync () 
 {
+	HOSTOS=$(uname -s)
+
 	if [ ! -f ${EXCL_FILE} ]; then
 		log "warning: exclude file: ${EXCL_FILE} not present, creating"
 		touch ${EXCL_FILE}
@@ -44,8 +46,18 @@ flirc_sync ()
 		exit
 	fi
 
+	# Create a Temporary Directory Name
+	if [ "$HOSTOS" == "Darwin" ]; then
+    	TMPDIR=$(mktemp -d -t fsync)
+	else
+    	TMPDIR=$(mktemp -d --tmpdir fsync.XXXXXX)
+	fi
+	if [ -n "$TMPDIR" ]; then
+    	trap "rm -rf $TMPDIR" EXIT
+	fi
+
 	# Cache before in case we have a change before sync
-	find ${WORK_PATH} | sed -e "s,${WORK_PATh}/,,g" > cache_temp.txt
+	find ${WORK_PATH} | sed -e "s,${WORK_PATH}/,,g" > ${TMPDIR}/cache_temp.txt
 	rsync -r -z -c -v --exclude-from=${EXCL_FILE} ${WORK_PATH}/ ${LOCL_PATH}
 	if [ "$?" -ne "0" ]
 	then
@@ -55,13 +67,12 @@ flirc_sync ()
 
 	# We succeed, put cache in our exclude and remove dups
 	log "debug: updating exclude file"
-	cat cache_temp.txt ${EXCL_FILE} > cache_temp2.txt
-	awk '!a[$0]++' cache_temp2.txt  > ${EXCL_FILE}
+	cat ${TMPDIR}/cache_temp.txt ${EXCL_FILE} > ${TMPDIR}/cache_temp2.txt
+	awk '!a[$0]++' ${TMPDIR}/cache_temp2.txt  > ${EXCL_FILE}
 
 	# Cleanup temp files
 	log "debug: cleanup"
-	rm cache_temp2.txt
-	rm cache_temp.txt
+	rm -fR ${TMPDIR}
 
 	log "success"
 	exit
