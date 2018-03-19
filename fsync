@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# Original from location - work path
+# -Path to sync from
+WORK_PATH="/net/hq-vault.local/volume2/src"
+# -server to ping, used to detirmine location
+WORK_SERV=hq-vault.local
+
+# Destination path at home
+SERV_PATH="/net/vault.local/volume1/src"
+# -server to ping, used to detirmine location
+HOME_SERV=vault.local
+
+# Local computer configuration
+# --home for synced files
+LOCL_PATH="${HOME}/.fsync/staging"
+# --exclude list location
+EXCL_FILE="${HOME}/.fsync/exclude-list.txt"
+# --logging file
+LOG_FILE="${HOME}/.fsync/fsync.log"
+
+log ()
+{
+    DATE=$(date +"%b_%d_%Y_%s")
+    echo "${DATE} :: $1" | tee -a ${LOG_FILE}
+}
+
+flirc_sync () 
+{
+	if [ ! -f ${EXCL_FILE} ]; then
+		log "warning: exclude file: ${EXCL_FILE} not present, creating"
+		touch ${EXCL_FILE}
+	fi
+
+	# Check if source directory exists
+	if [ ! -d "${WORK_PATH}" ]; then
+		log "error: src directory: ${WORK_PATH} does not exist"
+		exit
+	fi
+
+	# Check if local directory exists
+	if [ ! -d "${LOCL_PATH}" ]; then
+		log "error: dest directory: ${LOCL_PATH} does not exist"
+		exit
+	fi
+
+	# Cache before in case we have a change before sync
+	find ${WORK_PATH} | sed -e "s,${WORK_PATh}/,,g" > cache_temp.txt
+	rsync -r -z -c -v --exclude-from=${EXCL_FILE} ${WORK_PATH}/ ${LOCL_PATH}
+	if [ "$?" -ne "0" ]
+	then
+		log "error: failed to sync from ${WORK_PATH} to ${LOCL_PATH}"
+		exit
+	fi
+
+	# We succeed, put cache in our exclude and remove dups
+	log "debug: updating exclude file"
+	cat cache_temp.txt ${EXCL_FILE} > cache_temp2.txt
+	awk '!a[$0]++' cache_temp2.txt  > ${EXCL_FILE}
+
+	# Cleanup temp files
+	log "debug: cleanup"
+	rm cache_temp2.txt
+	rm cache_temp.txt
+
+	log "success"
+	exit
+}
+
+home_sync ()
+{
+	# Check if source directory exists
+	if [ ! -d "${LOCL_PATH}" ]; then
+		log "error: src directory: ${LOCL_PATH} does not exist"
+		exit
+	fi
+
+	# Check if local directory exists
+	if [ ! -d "${SERV_PATH}" ]; then
+		log "error: dest directory: ${SERV_PATH} does not exist"
+		exit
+	fi
+
+	# Cache before in case we have a change before sync
+	rsync -r -z -c -v ${LOCL_PATH}/ ${SERV_PATH}
+	if [ "$?" -ne "0" ]
+	then
+		log "error: failed to sync from ${LOCL_PATH} to ${SERV_PATH}"
+		exit
+	fi
+
+	# We succeed, clear out our local sync directory
+	log "debug: removing local files"
+	rm -fR ${LOCL_PATH}/*
+
+	log "success"
+	exit
+}
+
+ping -c1 -W1 ${HOME_SERV}
+if [ "$?" -eq "0" ]
+then
+	log "debug: SERVER NAME:  ${HOME_SERV}"
+	home_sync
+fi
+
+ping -c1 -W1 ${WORK_SERV}
+if [ "$?" -eq "0" ]
+then
+	log "debug: SERVER NAME:  ${WORK_SERV}"
+	flirc_sync
+fi
