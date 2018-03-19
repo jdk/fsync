@@ -97,6 +97,42 @@ home_sync ()
 	exit
 }
 
+
+if [ -z "${WORK_PATH}" ];
+then
+	log "error: need to set WORK_PATH variable, path to sync from"
+fi
+
+if [ -z "${WORK_SERV}" ];
+then
+	log "error: need to set WORK_SERV variable, used to detect location"
+fi
+
+if [ -z "${SERV_PATH}" ];
+then
+	log "error: need to set SERV_PATH variable, path to sync to"
+fi
+
+if [ -z "${HOME_SERV}" ];
+then
+	log "error: need to set HOME_SERV variable, used to detect location"
+fi
+
+if [ -z "${LOCL_PATH}" ];
+then
+	log "error: need to set LOCL_PATH variable, staging sync area on your comp"
+fi
+
+if [ -z "${EXCL_FILE}" ];
+then
+	log "error: need to set EXCL_FILE variable, successfully synced files"
+fi
+
+if [ -z "${LOG_FILE}" ];
+then
+	log "error: need to set LOG_FILE variable, file to log syncs"
+fi
+
 ping -c1 -W1 ${HOME_SERV}
 if [ "$?" -eq "0" ]
 then
