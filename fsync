@@ -58,7 +58,7 @@ flirc_sync ()
 
 	# Cache before in case we have a change before sync
 	find ${WORK_PATH} -type f | sed -e "s,${WORK_PATH}/,,g" > ${TMPDIR}/cache_temp.txt
-	rsync -r -z -c -v --exclude-from=${EXCL_FILE} ${WORK_PATH}/ ${LOCL_PATH}
+	rsync -azPv --exclude-from=${EXCL_FILE} ${WORK_PATH}/ ${LOCL_PATH}
 	if [ "$?" -ne "0" ]
 	then
 		log "error: failed to sync from ${WORK_PATH} to ${LOCL_PATH}"
