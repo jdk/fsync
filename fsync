@@ -57,7 +57,7 @@ flirc_sync ()
 	fi
 
 	# Cache before in case we have a change before sync
-	find ${WORK_PATH} | sed -e "s,${WORK_PATH}/,,g" > ${TMPDIR}/cache_temp.txt
+	find ${WORK_PATH} -type f | sed -e "s,${WORK_PATH}/,,g" > ${TMPDIR}/cache_temp.txt
 	rsync -r -z -c -v --exclude-from=${EXCL_FILE} ${WORK_PATH}/ ${LOCL_PATH}
 	if [ "$?" -ne "0" ]
 	then
