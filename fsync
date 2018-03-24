@@ -103,6 +103,13 @@ home_sync ()
 		exit
 	fi
 
+	# check to see if lock file present
+	if [ -f "${HOME}/.fsync/lock" ];
+	then
+		log "error: lock file present, need to finish syncing from work"
+		exit
+	fi
+
 	# We succeed, clear out our local sync directory
 	log "debug: removing local files"
 	rm -fR ${LOCL_PATH}/*
@@ -152,14 +159,6 @@ ping -c1 -W1 ${HOME_SERV}
 if [ "$?" -eq "0" ]
 then
 	log "debug: SERVER NAME:  ${HOME_SERV}"
-
-	# check to see if lock file present
-	if [ -f "${HOME}/.fsync/lock" ];
-	then
-		log "error: lock file present, need to finish syncing from work"
-		exit
-	fi
-
 	home_sync
 fi
 
