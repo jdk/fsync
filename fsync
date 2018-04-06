@@ -21,7 +21,7 @@ LOG_FILE="${HOME}/.fsync/fsync.log"
 
 log ()
 {
-    DATE=$(date +"%b_%d_%Y_%s")
+    DATE=$(date +"%b_%d_%Y_%H_%M_%S")
     echo "${DATE} :: $1" | tee -a ${LOG_FILE}
 }
 
