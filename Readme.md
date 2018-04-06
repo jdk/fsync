@@ -21,3 +21,9 @@ A lock file is created when we start a sync at work. If it doesn't finish, the
 lock file remains. If we get home, we should still dump everything off on our
 home NAS, but don't delete the local files, as they may be incomplete and
 we don't want to start over. 
+
+# Bitbar
+Simple bitbar script to display one of three options.
+Full Moon - There are pending files, the amount of files, and the list of files
+New Moon - There are no pending files
+Sync Icon - Sync still in progress
