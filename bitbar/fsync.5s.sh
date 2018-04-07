@@ -13,9 +13,44 @@
 STATUS=":new_moon:"
 STATUS=":last_quarter_moon:"
 STATUS=":full_moon:"
+	
+LOCL_PATH="${HOME}/.fsync/staging"
 
-FILES=$(find ~/.fsync/staging/ -type f -not -name '.excludes' -not -name '.DS_Store' | sed 's|^.*/||')
-COUNT=$(find ~/.fsync/staging/ -type f -not -name '.excludes' -not -name '.DS_Store' | sed 's|^.*/||' | wc -l)
+ignore=(
+".excludes"
+"*.jpg"
+"*.nfo"
+"*.png"
+".DS_Store"
+)
+EXCL=''
+
+# Assemble ignore list
+for i in "${ignore[@]}"
+do
+    EXCL+='-not -name '"$i"' '
+done
+
+files=()
+while IFS=  read -r -d $'\0'; do
+	files+=("$REPLY")
+done < <(find ${LOCL_PATH} -type f ${EXCL} -print0)
+
+FILES=$(find ${LOCL_PATH} -type f ${EXCL} | sed 's|^.*/||')
+
+if [[ "$#" -ge 1 ]];then
+    if [[ "$1" == 'open' ]] ; then
+		/usr/bin/open "${files[$2]}"
+    fi
+    if [[ "$1" == 'dir' ]] ; then
+		FILE_PATH=$(echo ${files[$2]} | sed -e 's/\(.*\/\).*/\1/')
+		/usr/bin/open "${FILE_PATH}"
+    fi
+    if [[ "$1" == 'staging' ]] ; then
+		/usr/bin/open "${LOCL_PATH}"
+    fi
+	exit
+fi
 
 # check to see if lock file present
 if [ -f "${HOME}/.fsync/lock" ];
@@ -27,9 +62,20 @@ if [ -z "$FILES" ];
 then
 	STATUS=":new_moon: Fsync"
 else
-	STATUS=":full_moon: ${COUNT}"
+	STATUS=":full_moon: ${#files[@]}"
 fi
+
+CLEAN=()
+for i in "${files[@]}"
+do
+	CLEAN+=("$(echo "${i}" | sed 's|^.*/||')")
+done
 
 echo ${STATUS} 
 echo "---"
-find ~/.fsync/staging/ -type f -not -name '.excludes' -not -name '.DS_Store' | sed 's|^.*/||'
+for (( i=0; i < ${#CLEAN[@]}; i++))
+do
+	echo "${CLEAN[$i]} | bash='$0' param1=open param2='$i' terminal=false"
+	echo "--open path | bash='$0' param1=dir param2='$i' terminal=false"
+done
+echo "Open Staging Dir | bash='$0' param1=staging param2='$i' terminal=false"
