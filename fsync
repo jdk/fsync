@@ -37,12 +37,14 @@ flirc_sync ()
 	# Check if source directory exists
 	if [ ! -d "${WORK_PATH}" ]; then
 		log "error: src directory: ${WORK_PATH} does not exist"
+		rm "${HOME}/.fsync/.running_sync"
 		exit
 	fi
 
 	# Check if local directory exists
 	if [ ! -d "${LOCL_PATH}" ]; then
 		log "error: dest directory: ${LOCL_PATH} does not exist"
+		rm "${HOME}/.fsync/.running_sync"
 		exit
 	fi
 
@@ -57,7 +59,7 @@ flirc_sync ()
 	fi
 
 	# Create a lock file
-	touch "${HOME}/.fsync/lock"
+	touch "${HOME}/.fsync/.lock"
 
 	# Cache before in case we have a change before sync
 	find ${WORK_PATH} -type f | sed -e "s,${WORK_PATH}/,,g" > ${TMPDIR}/cache_temp.txt
@@ -65,6 +67,7 @@ flirc_sync ()
 	if [ "$?" -ne "0" ]
 	then
 		log "error: failed to sync from ${WORK_PATH} to ${LOCL_PATH}"
+		rm "${HOME}/.fsync/.running_sync"
 		exit
 	fi
 
@@ -78,23 +81,29 @@ flirc_sync ()
 	rm -fR ${TMPDIR}
 
 	# Remove lock file, we are complete
-	rm "${HOME}/.fsync/lock"
+	rm "${HOME}/.fsync/.lock"
 
 	log "success"
+	rm "${HOME}/.fsync/.running_sync"
 	exit
 }
 
 home_sync ()
 {
+	# Create file to show we are running
+	touch "${HOME}/.fsync/.running_dump"
+
 	# Check if source directory exists
 	if [ ! -d "${LOCL_PATH}" ]; then
 		log "error: src directory: ${LOCL_PATH} does not exist"
+		rm "${HOME}/.fsync/.running_dump"
 		exit
 	fi
 
 	# Check if local directory exists
 	if [ ! -d "${SERV_PATH}" ]; then
 		log "error: dest directory: ${SERV_PATH} does not exist"
+		rm "${HOME}/.fsync/.running_dump"
 		exit
 	fi
 
@@ -103,13 +112,15 @@ home_sync ()
 	if [ "$?" -ne "0" ]
 	then
 		log "error: failed to sync from ${LOCL_PATH} to ${SERV_PATH}"
+		rm "${HOME}/.fsync/.running_dump"
 		exit
 	fi
 
 	# check to see if lock file present
-	if [ -f "${HOME}/.fsync/lock" ];
+	if [ -f "${HOME}/.fsync/.lock" ];
 	then
 		log "warning: lock file present, need to finish syncing from work"
+		rm "${HOME}/.fsync/.running_dump"
 		exit
 	fi
 
@@ -118,6 +129,7 @@ home_sync ()
 	rm -fR ${LOCL_PATH}/*
 
 	log "success"
+	rm "${HOME}/.fsync/.running_dump"
 	exit
 }
 
