@@ -52,13 +52,26 @@ if [[ "$#" -ge 1 ]];then
 	exit
 fi
 
-# check to see if lock file present
-if [ -f "${HOME}/.fsync/lock" ];
-then
-    STATUS=":cyclone: Syncing"
-fi
+# Make sure Status is empty
+STATUS=
 
-if [ -z "$FILES" ];
+# check to see if lock file present
+if [ -f "${HOME}/.fsync/.running_sync" ];
+then
+	echo ":lock: Syncing: ${#files[@]}"
+	sleep 3
+	echo ":cyclone: Syncing: ${#files[@]}"
+	echo "---"
+elif [ -f "${HOME}/.fsync/.running_dump" ];
+then
+	echo ":lock: Dumping: ${#files[@]}"
+	sleep 3
+	echo ":full_moon: Dumping: ${#files[@]}"
+	echo "---"
+elif [ -f "${HOME}/.fsync/.lock" ];
+then
+	echo ":lock: Incomplete"
+elif [ -z "$FILES" ];
 then
 	STATUS=":new_moon: Fsync"
 else
