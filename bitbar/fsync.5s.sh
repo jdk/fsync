@@ -8,6 +8,8 @@
 # <bitbar.image>http://photos.paulwrankin.com/screenshots/cpu-load.png</bitbar.image>
 # <bitbar.dependencies>bash</bitbar.dependencies>
 
+# PLIST
+
 # Test BitBar CPU Load plugin
 
 STATUS=":new_moon:"
@@ -91,4 +93,6 @@ do
 	echo "${CLEAN[$i]} | bash='$0' param1=open param2='$i' terminal=false"
 	echo "--open path | bash='$0' param1=dir param2='$i' terminal=false"
 done
-echo "Open Staging Dir | bash='$0' param1=staging param2='$i' terminal=false"
+echo "Fsync Config"
+echo "--Open Staging Dir | bash='$0' param1=staging param2='$i' terminal=false"
+echo "--Restart | bash='launchctl unload ${HOME}/Library/LaunchAgents/com.anonymous.fsync.plist && launchctl load ${HOME}/Library/LaunchAgents/com.anonymous.fsync.plist' terminal=false"
